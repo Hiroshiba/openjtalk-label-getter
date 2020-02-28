@@ -1,9 +1,9 @@
-from setuptools import setup, find_namespace_packages
+from setuptools import setup, find_packages
 
 setup(
-    name='openjtalk-label-getter',
+    name='openjtalk_label_getter',
     version='0.0.1',
-    packages=find_namespace_packages(),
+    packages=find_packages(),
     url='https://github.com/Hiroshiba/openjtalk-label-getter',
     author='Kazuyuki Hiroshiba',
     author_email='hihokaruta@gmail.com',
