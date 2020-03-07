@@ -44,7 +44,7 @@ def main():
     parser.add_argument('--htsvoice_path', type=Path,
                         default=Path('/usr/share/hts-voice/nitech-jp-atr503-m001/nitech_jp_atr503_m001.htsvoice'))
     parser.add_argument('--output_wave_path', type=Path,
-                        default=Path('f'))
+                        default=Path('/tmp/tmp_openjtalk_label_getter.wav'))
     parser.add_argument('--output_log_path', type=Path,
                         default=Path('/tmp/tmp_openjtalk_label_getter.txt'))
     openjtalk_label_getter(**vars(parser.parse_args()))
