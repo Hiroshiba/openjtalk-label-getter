@@ -1,7 +1,15 @@
 import argparse
 import re
+from dataclasses import dataclass
 from pathlib import Path
 from subprocess import PIPE, Popen
+
+
+@dataclass
+class Phoneme:
+    start: float
+    end: float
+    phoneme: str
 
 
 def openjtalk_label_getter(
@@ -28,10 +36,16 @@ def openjtalk_label_getter(
     log = output_log_path.read_text()
     labels = re.split(r'\[.+\]', log)[2].splitlines()
 
+    phonemes = []
     for label in filter(lambda x: len(x) > 0, labels):
         match = re.fullmatch(r'(\d+) (\d+) .+\^.+-(.+)\+.+=.+/A.+/B.+/C.+/D.+/E.+/F.+/G.+/H.+/I.+/J.+/K.+', label)
         start, end, phoneme = match.groups()
-        print(f'{int(start) / 10 / 1000 / 1000:.4f} {int(end) / 10 / 1000 / 1000:.4f} {phoneme}')
+        phonemes.append(Phoneme(
+            start=int(start) / 10 / 1000 / 1000,
+            end=int(end) / 10 / 1000 / 1000,
+            phoneme=phoneme,
+        ))
+    return phonemes
 
 
 def main():
@@ -47,7 +61,10 @@ def main():
                         default=Path('/tmp/tmp_openjtalk_label_getter.wav'))
     parser.add_argument('--output_log_path', type=Path,
                         default=Path('/tmp/tmp_openjtalk_label_getter.txt'))
-    openjtalk_label_getter(**vars(parser.parse_args()))
+    phonemes = openjtalk_label_getter(**vars(parser.parse_args()))
+
+    for p in phonemes:
+        print(f'{p.start:.4f} {p.end:.4f} {p.phoneme}')
 
 
 if __name__ == '__main__':
