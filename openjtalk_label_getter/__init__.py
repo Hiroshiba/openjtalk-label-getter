@@ -1,6 +1,7 @@
 import argparse
 import re
 import shutil
+import subprocess
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
@@ -36,7 +37,7 @@ def openjtalk_label_getter(
 
         tmp_output_wave_path = tmp_dir.joinpath("output.wav")
         tmp_output_log_path = tmp_dir.joinpath("output.txt")
-        p_openjtalk = Popen(
+        subprocess.run(
             [
                 openjtalk_command,
                 "-x",
@@ -50,7 +51,6 @@ def openjtalk_label_getter(
             ],
             stdin=p_text.stdout,
         )
-        p_openjtalk.wait()
 
         log = tmp_output_log_path.read_text()
 
