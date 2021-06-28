@@ -25,13 +25,16 @@ class Label:
 
 def openjtalk_label_getter(
     text: str,
-    openjtalk_command: str,
-    dict_path: Path,
-    htsvoice_path: Path,
-    output_wave_path: Optional[Path],
-    output_log_path: Optional[Path],
-    output_type: OutputType,
-    without_span: bool,
+    openjtalk_command="open_jtalk",
+    dict_path=Path("/var/lib/mecab/dic/open-jtalk/naist-jdic"),
+    htsvoice_path=Path(
+        "/usr/share/hts-voice/nitech-jp-atr503-m001/nitech_jp_atr503_m001.htsvoice"
+    ),
+    output_wave_path: Optional[Path] = None,
+    output_log_path: Optional[Path] = None,
+    output_type=OutputType.phoneme,
+    without_span=False,
+    raise_error_with_worning=False,
 ):
     p_text = Popen(["echo", text], stdout=PIPE)
     with TemporaryDirectory() as d:
@@ -39,7 +42,7 @@ def openjtalk_label_getter(
 
         tmp_output_wave_path = tmp_dir.joinpath("output.wav")
         tmp_output_log_path = tmp_dir.joinpath("output.txt")
-        subprocess.run(
+        p = subprocess.run(
             [
                 openjtalk_command,
                 "-x",
@@ -52,7 +55,13 @@ def openjtalk_label_getter(
                 tmp_output_log_path,
             ],
             stdin=p_text.stdout,
+            stderr=subprocess.PIPE,
+            text=True,
         )
+        if "ERROR" in p.stderr.upper():
+            raise ValueError(p.stderr)
+        if raise_error_with_worning and "WARNING" in p.stderr.upper():
+            raise ValueError(p.stderr)
 
         log = tmp_output_log_path.read_text()
 
@@ -134,6 +143,7 @@ def main():
         choices=[t.value for t in OutputType],
     )
     parser.add_argument("--without_span", action="store_true")
+    parser.add_argument("--raise_error_with_worning", action="store_true")
     outputs = openjtalk_label_getter(**vars(parser.parse_args()))
 
     for p in outputs:
