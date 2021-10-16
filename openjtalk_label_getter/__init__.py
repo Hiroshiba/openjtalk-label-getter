@@ -7,7 +7,7 @@ from enum import Enum
 from pathlib import Path
 from subprocess import PIPE, Popen
 from tempfile import TemporaryDirectory
-from typing import List, Optional
+from typing import List, Optional, Union
 
 
 class OutputType(str, Enum):
@@ -17,10 +17,61 @@ class OutputType(str, Enum):
 
 
 @dataclass
+class FullContextLabel:
+    contexts: dict[str, str]
+
+    @classmethod
+    def from_label(cls, label: str):
+        contexts = re.search(
+            r"^(?P<p1>.+?)\^(?P<p2>.+?)\-(?P<p3>.+?)\+(?P<p4>.+?)\=(?P<p5>.+?)"
+            r"/A\:(?P<a1>.+?)\+(?P<a2>.+?)\+(?P<a3>.+?)"
+            r"/B\:(?P<b1>.+?)\-(?P<b2>.+?)\_(?P<b3>.+?)"
+            r"/C\:(?P<c1>.+?)\_(?P<c2>.+?)\+(?P<c3>.+?)"
+            r"/D\:(?P<d1>.+?)\+(?P<d2>.+?)\_(?P<d3>.+?)"
+            r"/E\:(?P<e1>.+?)\_(?P<e2>.+?)\!(?P<e3>.+?)\_(?P<e4>.+?)\-(?P<e5>.+?)"
+            r"/F\:(?P<f1>.+?)\_(?P<f2>.+?)\#(?P<f3>.+?)\_(?P<f4>.+?)\@(?P<f5>.+?)\_(?P<f6>.+?)\|(?P<f7>.+?)\_(?P<f8>.+?)"  # noqa
+            r"/G\:(?P<g1>.+?)\_(?P<g2>.+?)\%(?P<g3>.+?)\_(?P<g4>.+?)\_(?P<g5>.+?)"
+            r"/H\:(?P<h1>.+?)\_(?P<h2>.+?)"
+            r"/I\:(?P<i1>.+?)\-(?P<i2>.+?)\@(?P<i3>.+?)\+(?P<i4>.+?)\&(?P<i5>.+?)\-(?P<i6>.+?)\|(?P<i7>.+?)\+(?P<i8>.+?)"  # noqa
+            r"/J\:(?P<j1>.+?)\_(?P<j2>.+?)"
+            r"/K\:(?P<k1>.+?)\+(?P<k2>.+?)\-(?P<k3>.+?)$",
+            label,
+        ).groupdict()
+        return cls(contexts=contexts)
+
+    @property
+    def phoneme(self):
+        return self.contexts["p3"]
+
+    @property
+    def label(self):
+        return (
+            "{p1}^{p2}-{p3}+{p4}={p5}"
+            "/A:{a1}+{a2}+{a3}"
+            "/B:{b1}-{b2}_{b3}"
+            "/C:{c1}_{c2}+{c3}"
+            "/D:{d1}+{d2}_{d3}"
+            "/E:{e1}_{e2}!{e3}_{e4}-{e5}"
+            "/F:{f1}_{f2}#{f3}_{f4}@{f5}_{f6}|{f7}_{f8}"
+            "/G:{g1}_{g2}%{g3}_{g4}_{g5}"
+            "/H:{h1}_{h2}"
+            "/I:{i1}-{i2}@{i3}+{i4}&{i5}-{i6}|{i7}+{i8}"
+            "/J:{j1}_{j2}"
+            "/K:{k1}+{k2}-{k3}"
+        ).format(**self.contexts)
+
+    def __repr__(self):
+        return f"<FullContextLabel phoneme='{self.phoneme}'>"
+
+    def __str__(self) -> str:
+        return self.label
+
+
+@dataclass
 class Label:
     start: Optional[float]
     end: Optional[float]
-    label: str
+    label: Union[str, FullContextLabel]
 
 
 def openjtalk_label_getter(
@@ -81,7 +132,8 @@ def openjtalk_label_getter(
             )
             assert match is not None
 
-            start, end, full_context_label, phoneme = match.groups()
+            start, end, context, phoneme = match.groups()
+            full_context_label = FullContextLabel.from_label(context)
 
             outputs.append(
                 Label(
