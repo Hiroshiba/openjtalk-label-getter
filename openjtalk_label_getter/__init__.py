@@ -7,7 +7,7 @@ from enum import Enum
 from pathlib import Path
 from subprocess import PIPE, Popen
 from tempfile import TemporaryDirectory
-from typing import List, Optional, Union
+from typing import Dict, List, Optional, Union
 
 
 class OutputType(str, Enum):
@@ -18,7 +18,7 @@ class OutputType(str, Enum):
 
 @dataclass
 class FullContextLabel:
-    contexts: dict[str, str]
+    contexts: Dict[str, str]
 
     @classmethod
     def from_label(cls, label: str):
